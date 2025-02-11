@@ -1,0 +1,120 @@
+- Given the following YAML
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: my-pvc  # Name of the Persistent Volume Claim
+
+- We would expect the following tables to be built
+
+(.)
+| apiVersion | kind       | metadata | spec |
+| apps/v1    | Deployment | ->       | ->   |
+
+(.metadata)
+| name             |
+| nginx-deployment |
+
+(.spec)
+| replicas | selector | template |
+| 3        | ->       | ->       |
+
+(.spec.selector)
+| matchLabels |
+| ->          |
+
+(.spec.selector.matchLabels)
+| app   |
+| nginx |
+
+(.spec.template)
+| metadata | containers | volumes |
+| ->       | ->         | ->      |
+
+(.spec.template.metadata)
+| labels |
+| ->     |
+
+(.spec.template.metadata.labels)
+| app   |
+| nginx |
+
+(.spec.template.containers)
+| name  | image        | ports |
+| nginx | nginx:latest | ->    |
+
+(.spec.template.containers.ports)
+| containerPort |
+| 80 |
+
+(.spec.template.volumes)
+| name | persistentVolumeClaim |
+| data | ->                    |
+
+(.spec.template.volumes.persistentVolumeClaim)
+| claimName |
+| my-pvc    |
+
+- Tried import the yaml with a ruby script and the loaded object looks like:
+```
+{
+    "apiVersion"=>"apps/v1",
+    "kind"=>"Deployment",
+    "metadata"=>{
+        "name"=>"nginx-deployment"
+    },
+    "spec"=>{
+        "replicas"=>3,
+        "selector"=>{
+            "matchLabels"=>{
+                "app"=>"nginx"
+            }
+        },
+        "template"=>{
+            "metadata"=>{
+                "labels"=>{
+                    "app"=>"nginx"
+                }
+            },
+            "spec"=>{
+                "containers"=>[{
+                    "name"=>"nginx",
+                    "image"=>"nginx:latest",
+                    "ports"=>[{
+                        "containerPort"=>80
+                    }]
+                }],
+                "volumes"=>[{
+                    "name"=>"data",
+                    "persistentVolumeClaim"=>{
+                        "claimName"=>"my-pvc"
+                    }
+                }]
+            }
+        }
+    }
+}
+
+- So, each object is a ruby hash ("key" => "value").
+- MAYBE, we could say that if the value of the hash is an object, we create a new table from that object?
+
+
